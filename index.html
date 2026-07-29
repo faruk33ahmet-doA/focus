@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masa — Görev Takibi</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#fafafa;
+    --border:#e8e8e6;
+    --border-strong:#dcdcd9;
+    --text:#171717;
+    --text-dim:#6b6b68;
+    --text-faint:#a5a5a1;
+    --radius:10px;
+    --sidebar-w:250px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    overflow:hidden;
+  }
+  .app{
+    display:flex;
+    height:100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar{
+    width:var(--sidebar-w);
+    flex-shrink:0;
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+  }
+  .brand{
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    padding:4px 8px 18px 8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--text);
+  }
+  .section-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--text-faint);
+    padding:0 8px;
+    margin:10px 0 8px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .project-list{
+    flex:1;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .project-item{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:8px 8px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13.5px;
+    color:var(--text);
+    position:relative;
+  }
+  .project-item:hover{background:var(--panel);}
+  .project-item.active{background:#f1f1ef;font-weight:600;}
+  .project-dot{
+    width:9px;height:9px;border-radius:50%;
+    flex-shrink:0;
+  }
+  .project-name{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    flex:1;
+  }
+  .project-count{
+    font-size:11px;
+    color:var(--text-faint);
+    font-variant-numeric:tabular-nums;
+  }
+  .project-item.all .project-dot{background:var(--text);}
+
+  .add-project-btn{
+    margin-top:8px;
+    border:1px dashed var(--border-strong);
+    background:none;
+    color:var(--text-dim);
+    font-size:13px;
+    padding:9px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .add-project-btn:hover{border-color:var(--text-dim);color:var(--text);}
+
+  .sidebar-footer{
+    font-size:11px;
+    color:var(--text-faint);
+    padding:14px 8px 2px 8px;
+    border-top:1px solid var(--border);
+    margin-top:14px;
+  }
+
+  /* MAIN */
+  .main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .main-header{
+    padding:24px 32px 16px 32px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-shrink:0;
+  }
+  .header-left{display:flex;align-items:center;gap:10px;}
+  .header-dot{width:11px;height:11px;border-radius:50%;}
+  .header-title{
+    font-size:19px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+  }
+  .header-meta{
+    font-size:12.5px;
+    color:var(--text-faint);
+    margin-top:3px;
+  }
+  .header-actions{display:flex;gap:8px;}
+  .icon-btn{
+    border:1px solid var(--border);
+    background:#fff;
+    width:32px;height:32px;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    color:var(--text-dim);
+  }
+  .icon-btn:hover{border-color:var(--border-strong);color:var(--text);}
+
+  .task-input-row{
+    padding:16px 32px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .task-input{
+    flex:1;
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:11px 14px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+    background:var(--panel);
+  }
+  .task-input:focus{border-color:var(--text-dim);background:#fff;}
+  .add-btn{
+    border:none;
+    background:var(--text);
+    color:#fff;
+    padding:0 18px;
+    border-radius:9px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .add-btn:hover{opacity:0.85;}
+  .add-btn:disabled{opacity:0.35;cursor:default;}
+
+  .task-list{
+    flex:1;
+    overflow-y:auto;
+    padding:8px 32px 40px 32px;
+  }
+  .task-row{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px 6px;
+    border-bottom:1px solid var(--border);
+  }
+  .task-row:last-child{border-bottom:none;}
+  .checkbox{
+    width:18px;height:18px;
+    border-radius:5px;
+    border:1.5px solid var(--border-strong);
+    flex-shrink:0;
+    margin-top:2px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:#fff;
+  }
+  .checkbox svg{display:none;width:11px;height:11px;}
+  .checkbox.checked{background:var(--text);border-color:var(--text);}
+  .checkbox.checked svg{display:block;}
+  .task-body{flex:1;min-width:0;}
+  .task-text{
+    font-size:14px;
+    line-height:1.5;
+    word-break:break-word;
+  }
+  .task-row.done .task-text{
+    color:var(--text-faint);
+    text-decoration:line-through;
+  }
+  .task-meta{
+    font-size:11.5px;
+    color:var(--text-faint);
+    margin-top:3px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .task-meta .proj-dot{width:6px;height:6px;border-radius:50%;}
+  .task-del{
+    border:none;background:none;color:var(--text-faint);
+    cursor:pointer;font-size:16px;padding:2px 6px;
+    opacity:0;
+    transition:opacity .1s;
+  }
+  .task-row:hover .task-del{opacity:1;}
+  .task-del:hover{color:#c0392b;}
+
+  .empty-state{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--text-faint);
+    font-size:13.5px;
+  }
+  .empty-state .big{font-size:15px;color:var(--text-dim);font-weight:600;margin-bottom:6px;}
+
+  /* MODAL */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(20,20,20,0.25);
+    display:none;
+    align-items:center;justify-content:center;
+    z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff;
+    border-radius:14px;
+    padding:22px;
+    width:320px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.15);
+    border:1px solid var(--border);
+  }
+  .modal h3{margin:0 0 14px 0;font-size:15px;font-weight:700;}
+  .modal input[type=text]{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+    margin-bottom:14px;
+  }
+  .modal input[type=text]:focus{border-color:var(--text-dim);}
+  .color-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:9px;
+    margin-bottom:18px;
+  }
+  .swatch{
+    width:26px;height:26px;border-radius:50%;
+    cursor:pointer;
+    border:2px solid transparent;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .swatch.selected{border-color:var(--text);}
+  .swatch.selected::after{content:"";width:7px;height:7px;border-radius:50%;background:#fff;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+  .btn-secondary{
+    border:1px solid var(--border);
+    background:#fff;
+    padding:9px 14px;
+    border-radius:8px;
+    font-size:13.5px;
+    cursor:pointer;
+    color:var(--text-dim);
+  }
+  .btn-secondary:hover{border-color:var(--border-strong);}
+  .btn-primary{
+    border:none;
+    background:var(--text);
+    color:#fff;
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary:hover{opacity:0.85;}
+  .btn-danger{
+    border:none;
+    background:#c0392b;
+    color:#fff;
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  @media (max-width:720px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:40;background:#fff;transform:translateX(-100%);transition:transform .18s;}
+    .sidebar.open{transform:translateX(0);}
+    .main-header,.task-input-row,.task-list{padding-left:18px;padding-right:18px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="brand-dot"></span>Masa</div>
+
+    <div class="section-label">Projeler</div>
+    <div class="project-list" id="projectList"></div>
+
+    <button class="add-project-btn" id="addProjectBtn">+ Yeni proje</button>
+
+    <div class="sidebar-footer">Veriler bu tarayıcıda saklanır.</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-header">
+      <div class="header-left">
+        <span class="header-dot" id="headerDot"></span>
+        <div>
+          <div class="header-title" id="headerTitle">Tüm görevler</div>
+          <div class="header-meta" id="headerMeta">0 görev</div>
+        </div>
+      </div>
+      <div class="header-actions" id="headerActions"></div>
+    </div>
+
+    <div class="task-input-row">
+      <input type="text" class="task-input" id="taskInput" placeholder="Yeni görev ekle ve Enter'a bas…">
+      <button class="add-btn" id="addTaskBtn">Ekle</button>
+    </div>
+
+    <div class="task-list" id="taskList"></div>
+  </main>
+
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="overlay" id="projectOverlay">
+  <div class="modal">
+    <h3 id="projectModalTitle">Yeni proje</h3>
+    <input type="text" id="projectNameInput" placeholder="Proje adı" maxlength="40">
+    <div class="color-grid" id="colorGrid"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="projectCancelBtn">Vazgeç</button>
+      <button class="btn-danger" id="projectDeleteBtn" style="display:none;margin-right:auto;">Sil</button>
+      <button class="btn-primary" id="projectSaveBtn">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = "masa_data_v1";
+  const COLORS = ["#171717","#e2725b","#d4a72c","#4a9d5b","#3a7ca5","#7b6ef6","#c2578f","#8a8a86"];
+
+  let state = load();
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && Array.isArray(parsed.projects) && Array.isArray(parsed.tasks)) return parsed;
+      }
+    }catch(e){}
+    return {
+      projects: [
+        {id:"p1", name:"Flyteq Agency", color:"#171717"},
+        {id:"p2", name:"Genel", color:"#8a8a86"}
+      ],
+      tasks: [],
+      activeProject: "all"
+    };
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){
+      console.error("Kaydedilemedi:", e);
+    }
+  }
+
+  function uid(){
+    return Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  }
+
+  // ---------- RENDER ----------
+  const projectListEl = document.getElementById("projectList");
+  const taskListEl = document.getElementById("taskList");
+  const headerTitleEl = document.getElementById("headerTitle");
+  const headerMetaEl = document.getElementById("headerMeta");
+  const headerDotEl = document.getElementById("headerDot");
+  const headerActionsEl = document.getElementById("headerActions");
+  const taskInput = document.getElementById("taskInput");
+
+  function getActiveProject(){
+    if(state.activeProject === "all") return null;
+    return state.projects.find(p => p.id === state.activeProject) || null;
+  }
+
+  function tasksForActive(){
+    if(state.activeProject === "all") return state.tasks;
+    return state.tasks.filter(t => t.projectId === state.activeProject);
+  }
+
+  function renderSidebar(){
+    projectListEl.innerHTML = "";
+
+    const allItem = document.createElement("div");
+    allItem.className = "project-item all" + (state.activeProject === "all" ? " active" : "");
+    allItem.innerHTML = `<span class="project-dot"></span><span class="project-name">Tüm görevler</span><span class="project-count">${state.tasks.filter(t=>!t.done).length}</span>`;
+    allItem.onclick = () => { state.activeProject = "all"; save(); render(); };
+    projectListEl.appendChild(allItem);
+
+    state.projects.forEach(p => {
+      const openCount = state.tasks.filter(t => t.projectId === p.id && !t.done).length;
+      const item = document.createElement("div");
+      item.className = "project-item" + (state.activeProject === p.id ? " active" : "");
+      item.innerHTML = `<span class="project-dot" style="background:${p.color}"></span><span class="project-name">${escapeHtml(p.name)}</span><span class="project-count">${openCount}</span>`;
+      item.onclick = () => { state.activeProject = p.id; save(); render(); };
+      item.oncontextmenu = (e) => { e.preventDefault(); openProjectModal(p); };
+      item.ondblclick = () => openProjectModal(p);
+      projectListEl.appendChild(item);
+    });
+  }
+
+  function renderHeader(){
+    const proj = getActiveProject();
+    const list = tasksForActive();
+    const openCount = list.filter(t=>!t.done).length;
+    const doneCount = list.filter(t=>t.done).length;
+
+    if(proj){
+      headerTitleEl.textContent = proj.name;
+      headerDotEl.style.background = proj.color;
+      headerDotEl.style.display = "inline-block";
+    }else{
+      headerTitleEl.textContent = "Tüm görevler";
+      headerDotEl.style.display = "none";
+    }
+    headerMetaEl.textContent = `${openCount} açık · ${doneCount} tamamlandı`;
+
+    headerActionsEl.innerHTML = "";
+    if(proj){
+      const editBtn = document.createElement("button");
+      editBtn.className = "icon-btn";
+      editBtn.title = "Projeyi düzenle";
+      editBtn.textContent = "✎";
+      editBtn.onclick = () => openProjectModal(proj);
+      headerActionsEl.appendChild(editBtn);
+    }
+  }
+
+  function renderTasks(){
+    const list = tasksForActive().slice().sort((a,b) => {
+      if(a.done !== b.done) return a.done ? 1 : -1;
+      return b.createdAt - a.createdAt;
+    });
+
+    taskListEl.innerHTML = "";
+
+    if(list.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.innerHTML = `<div class="big">Henüz görev yok</div>Yukarıdan yeni bir görev ekle.`;
+      taskListEl.appendChild(empty);
+      return;
+    }
+
+    list.forEach(t => {
+      const proj = state.projects.find(p => p.id === t.projectId);
+      const row = document.createElement("div");
+      row.className = "task-row" + (t.done ? " done" : "");
+
+      const cb = document.createElement("div");
+      cb.className = "checkbox" + (t.done ? " checked" : "");
+      cb.innerHTML = `<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      cb.onclick = () => { t.done = !t.done; save(); render(); };
+
+      const body = document.createElement("div");
+      body.className = "task-body";
+      const textEl = document.createElement("div");
+      textEl.className = "task-text";
+      textEl.textContent = t.text;
+      body.appendChild(textEl);
+
+      if(state.activeProject === "all" && proj){
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+        meta.innerHTML = `<span class="proj-dot" style="background:${proj.color}"></span>${escapeHtml(proj.name)}`;
+        body.appendChild(meta);
+      }
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "task-del";
+      delBtn.textContent = "✕";
+      delBtn.onclick = () => { state.tasks = state.tasks.filter(x => x.id !== t.id); save(); render(); };
+
+      row.appendChild(cb);
+      row.appendChild(body);
+      row.appendChild(delBtn);
+      taskListEl.appendChild(row);
+    });
+  }
+
+  function render(){
+    renderSidebar();
+    renderHeader();
+    renderTasks();
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ---------- ADD TASK ----------
+  const addTaskBtn = document.getElementById("addTaskBtn");
+
+  function addTask(){
+    const text = taskInput.value.trim();
+    if(!text) return;
+
+    let projectId = state.activeProject;
+    if(projectId === "all"){
+      if(state.projects.length === 0){
+        alert("Önce bir proje oluştur.");
+        return;
+      }
+      projectId = state.projects[0].id;
+    }
+
+    state.tasks.push({
+      id: uid(),
+      text,
+      done: false,
+      projectId,
+      createdAt: Date.now()
+    });
+    taskInput.value = "";
+    save();
+    render();
+  }
+
+  addTaskBtn.onclick = addTask;
+  taskInput.addEventListener("keydown", e => {
+    if(e.key === "Enter") addTask();
+  });
+
+  // ---------- PROJECT MODAL ----------
+  const overlay = document.getElementById("projectOverlay");
+  const modalTitle = document.getElementById("projectModalTitle");
+  const nameInput = document.getElementById("projectNameInput");
+  const colorGrid = document.getElementById("colorGrid");
+  const saveBtn = document.getElementById("projectSaveBtn");
+  const cancelBtn = document.getElementById("projectCancelBtn");
+  const deleteBtn = document.getElementById("projectDeleteBtn");
+
+  let editingProject = null;
+  let selectedColor = COLORS[0];
+
+  function buildColorGrid(){
+    colorGrid.innerHTML = "";
+    COLORS.forEach(c => {
+      const sw = document.createElement("div");
+      sw.className = "swatch" + (c === selectedColor ? " selected" : "");
+      sw.style.background = c;
+      sw.onclick = () => { selectedColor = c; buildColorGrid(); };
+      colorGrid.appendChild(sw);
+    });
+  }
+
+  function openProjectModal(project){
+    editingProject = project || null;
+    modalTitle.textContent = project ? "Projeyi düzenle" : "Yeni proje";
+    nameInput.value = project ? project.name : "";
+    selectedColor = project ? project.color : COLORS[state.projects.length % COLORS.length];
+    deleteBtn.style.display = project ? "inline-block" : "none";
+    buildColorGrid();
+    overlay.classList.add("show");
+    setTimeout(() => nameInput.focus(), 0);
+  }
+
+  function closeProjectModal(){
+    overlay.classList.remove("show");
+    editingProject = null;
+  }
+
+  document.getElementById("addProjectBtn").onclick = () => openProjectModal(null);
+  cancelBtn.onclick = closeProjectModal;
+  overlay.addEventListener("click", e => { if(e.target === overlay) closeProjectModal(); });
+
+  saveBtn.onclick = () => {
+    const name = nameInput.value.trim();
+    if(!name){ nameInput.focus(); return; }
+
+    if(editingProject){
+      editingProject.name = name;
+      editingProject.color = selectedColor;
+    }else{
+      const p = { id: uid(), name, color: selectedColor };
+      state.projects.push(p);
+      state.activeProject = p.id;
+    }
+    save();
+    closeProjectModal();
+    render();
+  };
+
+  deleteBtn.onclick = () => {
+    if(!editingProject) return;
+    const hasTasks = state.tasks.some(t => t.projectId === editingProject.id);
+    const msg = hasTasks
+      ? `"${editingProject.name}" silinsin mi? Bu projedeki tüm görevler de silinecek.`
+      : `"${editingProject.name}" silinsin mi?`;
+    if(!confirm(msg)) return;
+
+    state.tasks = state.tasks.filter(t => t.projectId !== editingProject.id);
+    state.projects = state.projects.filter(p => p.id !== editingProject.id);
+    if(state.activeProject === editingProject.id) state.activeProject = "all";
+    save();
+    closeProjectModal();
+    render();
+  };
+
+  nameInput.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); });
+
+  // init
+  if(!state.projects.find(p => p.id === state.activeProject) && state.activeProject !== "all"){
+    state.activeProject = "all";
+  }
+  render();
+})();
+</script>
+
+</body>
+</html>
